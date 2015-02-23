@@ -47,6 +47,7 @@ class DirectoryType extends AbstractType
                 'attr'  => ['help_text' => $this->translator->trans('directory.name.help_text')]
             ])
             ->add('slug', 'text')
+            ->add('searchable', 'checkbox', ['attr' => ['align_with_widget' => true]])
             ->add('save', 'submit', [
                 'label' => $this->translator->trans('button.submit')
             ])
