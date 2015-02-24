@@ -62,3 +62,5 @@ button:
     cancel: annuleren
     delete: verwijderen
     edit: bewerken
+    archive: toon archief
+    active: toon actief

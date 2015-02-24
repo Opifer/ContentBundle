@@ -71,9 +71,9 @@ class ContentManager implements ContentManagerInterface
     /**
      * {@inheritDoc}
      */
-    public function getPaginatedByRequest(Request $request)
+    public function getPaginatedByRequest(Request $request, $archive)
     {
-        $qb = $this->getRepository()->getQueryBuilderFromRequest($request);
+        $qb = $this->getRepository()->getQueryBuilderFromRequest($request, $archive);
 
         $page = ($request->get('p')) ? $request->get('p') : 1;
         $limit = ($request->get('limit')) ? $request->get('limit') : 25;

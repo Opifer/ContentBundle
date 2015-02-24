@@ -2,6 +2,7 @@
 
 namespace Opifer\ContentBundle\Controller\Api;
 
+use Elastica\JSON;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,14 +25,35 @@ class ContentController extends Controller
      */
     public function indexAction(Request $request)
     {
+        return $this->retrieveContent($request);
+    }
+
+    /**
+     * Archive
+     *
+     * @param Request $request
+     *
+     * @return null|JsonResponse|Response
+     */
+    public function archiveAction(Request $request)
+    {
+        return $this->retrieveContent($request, true);
+    }
+
+    /**
+     * @param Request $request
+     * @param bool $archive
+     * @return null|JsonResponse|Response
+     */
+    public function retrieveContent(Request $request, $archive = false)
+    {
         $event = new ResponseEvent($request);
         $this->get('event_dispatcher')->dispatch(Events::CONTENT_CONTROLLER_INDEX, $event);
         if (null !== $event->getResponse()) {
             return $event->getResponse();
         }
 
-        $paginator = $this->get('opifer.content.content_manager')
-            ->getPaginatedByRequest($request);
+        $paginator = $this->get('opifer.content.content_manager')->getPaginatedByRequest($request, $archive);
 
         $contents = $paginator->getCurrentPageResults();
         $contents = $this->get('jms_serializer')->serialize(iterator_to_array($contents), 'json');
@@ -69,18 +91,74 @@ class ContentController extends Controller
     }
 
     /**
-     * Delete
+     * Restore
      *
      * @param Request $request
      * @param integer $id
      *
-     * @return Response
+     * @return JsonResponse
+     */
+    public function restoreAction(Request $request, $id)
+    {
+        $manager = $this->get('opifer.content.content_manager');
+        $repository = $manager->getRepository();
+        $repository->setRetrieveArchived(true);
+        $content = $repository->find($id);
+
+
+        if(is_null($content)) {
+            return new JsonResponse(['success' => false ]);
+        }
+
+        $content->setDeletedAt(null);
+        $em = $this->get('doctrine')->getManager();
+        $em->persist($content);
+        $em->flush();
+        $repository->setRetrieveArchived(false);
+
+        return new JsonResponse(['success' => true ]);
+    }
+
+    /**
+     * Delete
+     *
+     * @param Request $request
+     * @param $id
+     * @return null|JsonResponse|Response
      */
     public function deleteAction(Request $request, $id)
     {
-        $manager = $this->get('opifer.content.content_manager');
-        $content = $manager->getRepository()->find($id);
+        return $this->deleteContent($request, $id);
+    }
 
+    /**
+     * Permanent Delete
+     *
+     * @param Request $request
+     * @param $id
+     * @return null|JsonResponse|Response
+     */
+    public function permaAction(Request $request, $id)
+    {
+        return $this->deleteContent($request, $id, true);
+    }
+
+    /**
+     *
+     * @param Request $request
+     * @param $id
+     * @param bool $archive
+     * @return null|JsonResponse|Response
+     */
+    private function deleteContent(Request $request, $id, $archive = false) {
+        $manager = $this->get('opifer.content.content_manager');
+        $repository = $manager->getRepository();
+        if($archive) { $repository->setRetrieveArchived(true); }
+        $content = $repository->find($id);
+
+        if($content === null) {
+            return new JsonResponse(['success' => false]);
+        }
         $event = new ContentResponseEvent($content, $request);
         $this->get('event_dispatcher')->dispatch(Events::CONTENT_CONTROLLER_DELETE, $event);
         if (null !== $event->getResponse()) {
@@ -90,6 +168,8 @@ class ContentController extends Controller
         $em = $this->get('doctrine')->getManager();
         $em->remove($content);
         $em->flush();
+
+        $repository->setRetrieveArchived(false);
 
         return new JsonResponse(['success' => true]);
     }

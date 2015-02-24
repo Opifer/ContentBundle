@@ -7,6 +7,14 @@ angular.module('OpiferContent', ['angular-inview'])
         });
     }])
 
+    .factory('ArchiveService', ['$resource', '$routeParams', function($resource, $routeParams) {
+        return $resource(Routing.generate('opifer_content_api_content_archive') + '/:id', {}, {
+            archive: {method: 'GET', params: {}},
+            restore: {method: 'GET', params: {id: $routeParams.id}},
+            delete: {method: 'DELETE', params: {id: $routeParams.id}}
+        });
+    }])
+
     .factory('DirectoryService', ['$resource', '$routeParams', function($resource, $routeParams) {
         return $resource(Routing.generate('opifer_content_api_directory'), {}, {
             index: {method: 'GET', isArray: true, params: {}}
@@ -21,6 +29,7 @@ angular.module('OpiferContent', ['angular-inview'])
         return {
             restrict: 'E',
             transclude: true,
+            contents: '',
             scope: {
                 name: '@',
                 value: '@',
@@ -31,10 +40,11 @@ angular.module('OpiferContent', ['angular-inview'])
                 directoryId: '@',
                 //locale: '@',
                 mode: '@',
-                receiver: '@'
+                receiver: '@',
+                archive: '@'
             },
             templateUrl: '/bundles/opifercontent/app/content/content.html',
-            controller: function($scope, ContentService, DirectoryService) {
+            controller: function($scope, ContentService, DirectoryService, ArchiveService) {
                 $scope.navto = false;
                 $scope.maxPerPage = 25;
                 $scope.currentPage = 1;
@@ -47,8 +57,8 @@ angular.module('OpiferContent', ['angular-inview'])
                 $scope.inSearch = false;
                 $scope.confirmation = {
                     shown: false,
-                    name: '',
-                }
+                    name: ''
+                };
 
                 if (typeof $scope.history === "undefined") {
                     $scope.history = [];
@@ -70,49 +80,106 @@ angular.module('OpiferContent', ['angular-inview'])
                     }
                 });
 
-
-                $scope.fetchContents = function() {
-                    ContentService.index({
-                        site_id: $scope.siteId,
-                        directory_id: $scope.directoryId,
-                        //locale: $scope.locale,
-                        q: $scope.query,
-                        p: $scope.currentPage,
-                        limit: $scope.maxPerPage
-                    },
-                    function(response, headers) {
-                        for (var key in response.results) {
-                            if (response.results[key].pivotedAttributes.coverImage) {
-                                response.results[key].pivotedAttributes.coverImage = Routing.generate('liip_imagine_filter', {'path':  response.results[key].pivotedAttributes.coverImage, 'filter' : 'medialibrary'});
+                 $scope.searchContents = function() {
+                    if (!$scope.archive) {
+                        ContentService.index({
+                            site_id: $scope.siteId,
+                            directory_id: 0,
+                            //locale: $scope.locale,
+                            q: $scope.query,
+                            p: $scope.currentPage,
+                            limit: $scope.maxPerPage
+                        },
+                        function (response, headers) {
+                            $scope.directorys = [];
+                            $scope.contents = [];
+                            for (var key in response.results) {
+                                if (response.results[key].pivotedAttributes.coverImage) {
+                                    response.results[key].pivotedAttributes.coverImage = Routing.generate('liip_imagine_filter', {
+                                        'path': response.results[key].pivotedAttributes.coverImage,
+                                        'filter': 'medialibrary'
+                                    });
+                                }
+                                $scope.contents.push(response.results[key]);
                             }
-                            $scope.contents.push(response.results[key]);
-                        }
-                        $scope.numberOfResults = response.total_results;
-                        $scope.lblPaginate = "Meer content (" + ($scope.numberOfResults - ($scope.currentPage * $scope.maxPerPage)) + ")";
-                    });
+                            $scope.numberOfResults = response.total_results;
+                            $scope.remainingResults = ($scope.numberOfResults - ($scope.currentPage * $scope.maxPerPage));
+                            $scope.lblPaginate = "Meer content (" + ($scope.numberOfResults - ($scope.currentPage * $scope.maxPerPage)) + ")";
+                        });
+                    } else {
+                        ArchiveService.archive({
+                            site_id: $scope.siteId,
+                            directory_id: 0,
+                            //locale: $scope.locale,
+                            q: $scope.query,
+                            p: $scope.currentPage,
+                            limit: $scope.maxPerPage
+                        },
+                        function (response, headers) {
+                            $scope.directorys = [];
+                            $scope.contents = [];
+                            for (var key in response.results) {
+                                if (response.results[key].pivotedAttributes.coverImage) {
+                                    response.results[key].pivotedAttributes.coverImage = Routing.generate('liip_imagine_filter', {
+                                        'path': response.results[key].pivotedAttributes.coverImage,
+                                        'filter': 'medialibrary'
+                                    });
+                                }
+                                $scope.contents.push(response.results[key]);
+                            }
+                            $scope.numberOfResults = response.total_results;
+                            $scope.lblPaginate = "Meer content (" + ($scope.numberOfResults - ($scope.currentPage * $scope.maxPerPage)) + ")";
+                        });
+                    }
                 };
 
-                $scope.searchContents = function() {
-                    ContentService.index({
-                        site_id: $scope.siteId,
-                        directory_id: 0,
-                        //locale: $scope.locale,
-                        q: $scope.query,
-                        p: $scope.currentPage,
-                        limit: $scope.maxPerPage
-                    },
-                    function(response, headers) {
-                        $scope.directorys = [];
-                        $scope.contents = [];
-                        for (var key in response.results) {
-                            if (response.results[key].pivotedAttributes.coverImage) {
-                                response.results[key].pivotedAttributes.coverImage = Routing.generate('liip_imagine_filter', {'path':  response.results[key].pivotedAttributes.coverImage, 'filter' : 'medialibrary'});
+                $scope.fetchContents = function() {
+                    if(!$scope.archive) {
+                        ContentService.index({
+                            site_id: $scope.siteId,
+                            directory_id: $scope.directoryId,
+                            //locale: $scope.locale,
+                            q: $scope.query,
+                            p: $scope.currentPage,
+                            limit: $scope.maxPerPage
+                        },
+                        function (response, headers) {
+                            for (var key in response.results) {
+                                if (response.results[key].pivotedAttributes.coverImage) {
+                                    response.results[key].pivotedAttributes.coverImage = Routing.generate('liip_imagine_filter', {
+                                        'path': response.results[key].pivotedAttributes.coverImage,
+                                        'filter': 'medialibrary'
+                                    });
+                                }
+                                $scope.contents.push(response.results[key]);
                             }
-                            $scope.contents.push(response.results[key]);
-                        }
-                        $scope.numberOfResults = response.total_results;
-                        $scope.lblPaginate = "Meer content (" + ($scope.numberOfResults - ($scope.currentPage * $scope.maxPerPage)) + ")";
-                    });
+                            $scope.numberOfResults = response.total_results;
+                            $scope.remainingResults = ($scope.numberOfResults - ($scope.currentPage * $scope.maxPerPage));
+                            $scope.lblPaginate = "Meer content (" + ($scope.numberOfResults - ($scope.currentPage * $scope.maxPerPage)) + ")"
+                        });
+                    } else {
+                        ArchiveService.archive({
+                            site_id: $scope.siteId,
+                            directory_id: $scope.directoryId,
+                            //locale: $scope.locale,
+                            q: $scope.query,
+                            p: $scope.currentPage,
+                            limit: $scope.maxPerPage
+                        },
+                        function (response, headers) {
+                            for (var key in response.results) {
+                                if (response.results[key].pivotedAttributes.coverImage) {
+                                    response.results[key].pivotedAttributes.coverImage = Routing.generate('liip_imagine_filter', {
+                                        'path': response.results[key].pivotedAttributes.coverImage,
+                                        'filter': 'medialibrary'
+                                    });
+                                }
+                                $scope.contents.push(response.results[key]);
+                            }
+                            $scope.numberOfResults = response.total_results;
+                            $scope.lblPaginate = "Meer content (" + ($scope.numberOfResults - ($scope.currentPage * $scope.maxPerPage)) + ")"
+                        });
+                    }
                 };
 
                 $scope.$watchCollection('[query]', _.debounce(function() {
@@ -162,7 +229,17 @@ angular.module('OpiferContent', ['angular-inview'])
                             });
                         }
                     });
+                    $scope.confirmation.shown = false;
+                };
 
+                $scope.deletePermaContent = function(id) {
+                    angular.forEach($scope.contents, function(c, index) {
+                        if (c.id === id) {
+                            ArchiveService.delete({id: c.id}, function() {
+                                $scope.contents.splice(index, 1);
+                            });
+                        }
+                    });
                     $scope.confirmation.shown = false;
                 };
 
@@ -201,8 +278,14 @@ angular.module('OpiferContent', ['angular-inview'])
                     window.location = Routing.generate('opifer_content_content_edit', {'id': id});
                 };
 
+                $scope.restoreContent = function(id) {
+                    ArchiveService.restore({id: id});
+                    $scope.reloadContents();
+                };
+
                 $scope.loadMore = function(e) {
-                    if ($scope.remainingResults == 0) return;
+                    if ($scope.remainingResults == 0 || ($scope.maxPerPage * $scope.currentPage) > $scope.numberOfResults) return;
+                    $scope.remainingResults -= $scope.maxPerPage;
                     $scope.currentPage++;
                     $scope.lblPaginate = "Laden…";
                     $scope.fetchContents();
@@ -222,7 +305,7 @@ angular.module('OpiferContent', ['angular-inview'])
                     }
                     var idx = $scope.$parent.subject.right.value.indexOf(contentId);
 
-                    return (idx >= 0) ? true : false;
+                    return (idx >= 0);
                 };
             },
             compile: function(element, attrs ){
@@ -231,3 +314,5 @@ angular.module('OpiferContent', ['angular-inview'])
         };
     })
 ;
+
+

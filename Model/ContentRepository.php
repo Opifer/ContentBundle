@@ -21,6 +21,9 @@ use Opifer\CrudBundle\Pagination\Paginator;
  */
 class ContentRepository extends EntityRepository
 {
+
+    private $retrieveArchived;
+
     /**
      * Used by Elastica to transform results to model
      *
@@ -44,10 +47,11 @@ class ContentRepository extends EntityRepository
      * Get a querybuilder by request
      *
      * @param Request $request
+     * @param $archive
      *
      * @return \Doctrine\ORM\QueryBuilder
      */
-    public function getQueryBuilderFromRequest(Request $request)
+    public function getQueryBuilderFromRequest(Request $request, $archive)
     {
         $qb = $this->createValuedQueryBuilder('c');
         $qb->andWhere('c.nestedIn IS NULL');
@@ -62,7 +66,12 @@ class ContentRepository extends EntityRepository
             }
         }
 
-        $qb->andWhere('c.deletedAt IS NULL');  // @TODO fix SoftDeleteAble filter
+        if($archive) {
+            $this->setRetrieveArchived(true);
+            $qb->andWhere('c.deletedAt IS NOT NULL');
+        } else {
+            $qb->andWhere('c.deletedAt IS NULL');
+        }
 
         $qb->orderBy('c.slug');
 
@@ -335,5 +344,27 @@ class ContentRepository extends EntityRepository
         ;
 
         return $query->getResult();
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRetrieveArchived()
+    {
+        return $this->retrieveArchived;
+    }
+
+    /**
+     * @param mixed $retrieveArchived
+     */
+    public function setRetrieveArchived($retrieveArchived)
+    {
+        $this->retrieveArchived = $retrieveArchived;
+        $filters = $this->getEntityManager()->getFilters();
+        if($retrieveArchived === true && $filters->isEnabled('softdeleteable')) {
+            $filters->disable('softdeleteable');
+        } elseif($retrieveArchived !== true) {
+            $filters->enable('softdeleteable');
+        }
     }
 }

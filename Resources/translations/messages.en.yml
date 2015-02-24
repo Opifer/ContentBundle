@@ -61,3 +61,5 @@ button:
     cancel: cancel
     delete: delete
     edit: edit
+    archive: show archived
+    active: show active

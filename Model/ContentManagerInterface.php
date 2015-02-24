@@ -25,11 +25,11 @@ interface ContentManagerInterface
     /**
      * Get paginated items by request
      *
-     * @param  Request $request
-     *
-     * @return ArrayCollection
+     * @param Request $request
+     * @param $archive
+     * @return mixed
      */
-    public function getPaginatedByRequest(Request $request);
+    public function getPaginatedByRequest(Request $request, $archive);
 
     /**
      * Find one content item by its slug

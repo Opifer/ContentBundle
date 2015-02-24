@@ -5,6 +5,27 @@ opifer_content_api_content:
     options:
         expose: true
 
+opifer_content_api_content_archive:
+    path: /contents/archive
+    defaults: {_controller: OpiferContentBundle:Api/Content:archive }
+    methods: [GET]
+    options:
+        expose: true
+
+opifer_content_api_content_archive_restore:
+    path: /contents/archive/{id}
+    defaults: {_controller: OpiferContentBundle:Api/Content:restore }
+    methods: [GET]
+    options:
+        expose: true
+
+opifer_content_api_content_archive_delete:
+    path: /contents/archive/{id}
+    defaults: {_controller: OpiferContentBundle:Api/Content:perma }
+    methods: [DELETE]
+    options:
+        expose: true
+
 opifer_content_api_content_view:
     path: /contents/{id}
     defaults: { _controller: OpiferContentBundle:Api/Content:view }
@@ -32,3 +53,4 @@ opifer_content_api_layout:
     methods: [GET]
     options:
         expose: true
+

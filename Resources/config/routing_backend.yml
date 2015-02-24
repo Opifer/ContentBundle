@@ -39,3 +39,6 @@ opifer_content_content_edit:
     defaults: { _controller: OpiferContentBundle:Backend/Content:edit, mode: simple }
     options:
         expose: true
+opifer_content_content_archive:
+    path: /content/archive
+    defaults: { _controller: OpiferContentBundle:Backend/Content:archive }
