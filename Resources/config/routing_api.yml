@@ -21,7 +21,7 @@ opifer_content_api_content_archive_restore:
 
 opifer_content_api_content_archive_delete:
     path: /contents/archive/{id}
-    defaults: {_controller: OpiferContentBundle:Api/Content:perma }
+    defaults: {_controller: OpiferContentBundle:Api/Content:permanentlyDelete }
     methods: [DELETE]
     options:
         expose: true
@@ -53,4 +53,3 @@ opifer_content_api_layout:
     methods: [GET]
     options:
         expose: true
-

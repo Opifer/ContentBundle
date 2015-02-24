@@ -6,9 +6,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-
-use Opifer\ContentBundle\Model\ContentInterface;
 use Opifer\ContentBundle\Event\ContentResponseEvent;
 use Opifer\ContentBundle\Event\ResponseEvent;
 use Opifer\ContentBundle\OpiferContentEvents as Events;
@@ -16,7 +13,7 @@ use Opifer\ContentBundle\OpiferContentEvents as Events;
 class ContentController extends Controller
 {
     /**
-     * Index
+     * Index.
      *
      * @param Request $request
      *
@@ -28,7 +25,7 @@ class ContentController extends Controller
     }
 
     /**
-     * Archive
+     * Archive.
      *
      * @param Request $request
      *
@@ -41,7 +38,8 @@ class ContentController extends Controller
 
     /**
      * @param Request $request
-     * @param bool $archive
+     * @param bool    $archive
+     *
      * @return null|JsonResponse|Response
      */
     public function retrieveContent(Request $request, $archive = false)
@@ -59,14 +57,14 @@ class ContentController extends Controller
 
         $data = [
             'results'       => json_decode($contents, true),
-            'total_results' => $paginator->getTotalResults()
+            'total_results' => $paginator->getTotalResults(),
         ];
 
         return new JsonResponse($data);
     }
 
     /**
-     * View
+     * View.
      *
      * @param Request $request
      * @param integer $id
@@ -90,7 +88,7 @@ class ContentController extends Controller
     }
 
     /**
-     * Restore
+     * Restore.
      *
      * @param Request $request
      * @param integer $id
@@ -100,75 +98,72 @@ class ContentController extends Controller
     public function restoreAction(Request $request, $id)
     {
         $manager = $this->get('opifer.content.content_manager');
-        $repository = $manager->getRepository();
-        $repository->setRetrieveArchived(true);
-        $content = $repository->find($id);
-
-
-        if(is_null($content)) {
-            return new JsonResponse(['success' => false ]);
+        $content = $manager->retrieveContent($id, true);
+        if ($content === null) {
+            return new JsonResponse(['success' => false]);
         }
 
-        $content->setDeletedAt(null);
-        $em = $this->get('doctrine')->getManager();
-        $em->persist($content);
-        $em->flush();
-        $repository->setRetrieveArchived(false);
+        $event = new ContentResponseEvent($content, $request);
+        $this->get('event_dispatcher')->dispatch(Events::CONTENT_CONTROLLER_ARCHIVE_RESTORE, $event);
+        if (null !== $event->getResponse()) {
+            return $event->getResponse();
+        }
+
+        $manager->restoreContent($content);
 
         return new JsonResponse(['success' => true ]);
     }
 
     /**
-     * Delete
+     * Delete.
      *
      * @param Request $request
      * @param $id
+     *
      * @return null|JsonResponse|Response
      */
     public function deleteAction(Request $request, $id)
     {
-        return $this->deleteContent($request, $id);
-    }
-
-    /**
-     * Permanent Delete
-     *
-     * @param Request $request
-     * @param $id
-     * @return null|JsonResponse|Response
-     */
-    public function permaAction(Request $request, $id)
-    {
-        return $this->deleteContent($request, $id, true);
-    }
-
-    /**
-     *
-     * @param Request $request
-     * @param $id
-     * @param bool $archive
-     * @return null|JsonResponse|Response
-     */
-    private function deleteContent(Request $request, $id, $archive = false) {
         $manager = $this->get('opifer.content.content_manager');
-        $repository = $manager->getRepository();
-        if($archive) { $repository->setRetrieveArchived(true); }
-        $content = $repository->find($id);
-
-        if($content === null) {
+        $content = $manager->retrieveContent($id);
+        if ($content === null) {
             return new JsonResponse(['success' => false]);
         }
+
         $event = new ContentResponseEvent($content, $request);
         $this->get('event_dispatcher')->dispatch(Events::CONTENT_CONTROLLER_DELETE, $event);
         if (null !== $event->getResponse()) {
             return $event->getResponse();
         }
 
-        $em = $this->get('doctrine')->getManager();
-        $em->remove($content);
-        $em->flush();
+        $response = $manager->deleteContent($content);
 
-        $repository->setRetrieveArchived(false);
+        return new JsonResponse(['success' => true]);
+    }
+
+    /**
+     * Permanent Delete.
+     *
+     * @param Request $request
+     * @param $id
+     *
+     * @return null|JsonResponse|Response
+     */
+    public function permanentlyDeleteAction(Request $request, $id)
+    {
+        $repository = $this->get('opifer.content.content_manager');
+        $content = $repository->retrieveContent($id, true);
+        if ($content === null) {
+            return new JsonResponse(['success' => false]);
+        }
+
+        $event = new ContentResponseEvent($content, $request);
+        $this->get('event_dispatcher')->dispatch(Events::CONTENT_CONTROLLER_ARCHIVE_DELETE, $event);
+        if (null !== $event->getResponse()) {
+            return $event->getResponse();
+        }
+
+        $response = $repository->deleteContent($content);
 
         return new JsonResponse(['success' => true]);
     }
