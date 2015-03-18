@@ -53,6 +53,30 @@ final class OpiferContentEvents
     const CONTENT_CONTROLLER_DELETE = 'opifer_content.content_controller_delete';
 
     /**
+     * Archive event
+     *
+     * Called right before retrieve the archived only content items
+     * Receives the Opifer\ContentBundle\Event\ResponseEvent
+     */
+    const CONTENT_CONTROLLER_ARCHIVE = 'opifer_content.content_controller_archive';
+
+    /**
+     * Restore event
+     *
+     * Called right after retrieving the to be restored content item.
+     * Receives the Opifer\ContentBundle\Event\ResponseEvent
+     */
+    const CONTENT_CONTROLLER_ARCHIVE_RESTORE = 'opifer_content.content_controller_archive_restore';
+
+    /**
+     * Permanent Delete event
+     *
+     * Call right after retrieving the to-be-deleted content item for permanent deletion.
+     * Receives the Opifer\ContentBundle\Event\ResponseEvent
+     */
+    const CONTENT_CONTROLLER_ARCHIVE_DELETE = 'opifer_content.content_controller_archive_permadelete';
+
+    /**
      * Index event
      *
      * Called before any actions inside the indexAction in content controllers
@@ -83,4 +107,7 @@ final class OpiferContentEvents
      * Receives the Opifer\ContentBundle\Event\ContentResponseEvent
      */
     const DIRECTORY_CONTROLLER_DELETE = 'opifer_content.directory_controller_delete';
+
 }
+
+

@@ -1,15 +1,26 @@
 {% extends 'OpiferContentBundle::base.html.twig' %}
-
 {% block opifer_content_body %}
     {% spaceless %}
+
         <div class="page-header clearfix">
-            <h1 class="pull-left">Content</h1>
-            <a href="{{ path('opifer_content_content_init') }}" class="btn btn-default pull-right">
-                {{ 'button.add'|trans|capitalize }}
-            </a>
+            <h1 class="pull-left">{% if archive %} Archived {% endif %} Content</h1>
+            <div class="btn-group pull-right">
+                {% if archive %}
+                    <a href="{{ path('opifer_content_content_index') }}" class="btn btn-default ">
+                        {{ 'button.active'|trans|title }}
+                    </a>
+                {% else %}
+                    <a href="{{ path('opifer_content_content_archive') }}" class="btn btn-default ">
+                        {{ 'button.archive'|trans|title }}
+                    </a>
+                    <a href="{{ path('opifer_content_content_init') }}" class="btn btn-default ">
+                        {{ 'button.add'|trans|title }}
+                    </a>
+                {% endif %}
+            </div>
         </div>
 
-        <content-browser site-id="" locale="nl_NL" directory-id="0"></content-browser>
+        <content-browser site-id="" locale="nl_NL" directory-id="0" archive="{{ archive }}"></content-browser>
 
         {{ include('OpiferCrudBundle:Datagrid:confirmation.html.twig') }}
     {% endspaceless %}

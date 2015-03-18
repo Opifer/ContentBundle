@@ -24,23 +24,23 @@
     <section class="panel-section">
         <table class="table">
             <thead>
-                <tr>
-                    <th width="32">
+            <tr>
+                <th width="32">
 
-                    </th>
-                    <th>
-                        Title
-                    </th>
-                    <th class="detail hidden-xs">
-                        Permalink
-                    </th>
-                    <th class="detail hidden-xs">
-                        Template
-                    </th>
-                    <th width="110">
+                </th>
+                <th>
+                    Title
+                </th>
+                <th class="detail hidden-xs">
+                    Permalink
+                </th>
+                <th class="detail hidden-xs">
+                    Template
+                </th>
+                <th width="120">
 
-                    </th>
-                </tr>
+                </th>
+            </tr>
             </thead>
             <tr ng-repeat="directory in directorys">
                 <td ng-click="navigateToDirectory(directory)" class="cell-folder cell-cover"></td>
@@ -58,8 +58,14 @@
                 <td ng-click="editContent(content.id)" class="detail hidden-xs">{{ content.slug}}</td>
                 <td ng-click="editContent(content.id)" class="detail hidden-xs">{{ content.templateName}}</td>
                 <td class="actions" ng-if="mode == 'ADMIN'">
-                    <a href="#" ng-click="editContent(content.id)">Edit</a>&nbsp;
-                    <a  class="danger js-delete-confirm" ng-click="confirmDeleteContent($index)" data-name="{{ content.title }}">Delete</a>
+                    <div ng-if="archive">
+                        <a href="#" ng-click="restoreContent(content.id)">Restore</a>&nbsp;
+                        <a class="danger js-delete-confirm" ng-click="confirmDeleteContent($index)" data-name="{{ content.title }}">Delete</a>
+                    </div>
+                    <div ng-if="!archive">
+                        <a href="#" ng-click="editContent(content.id)">Edit</a>&nbsp;
+                        <a class="danger js-delete-confirm" ng-click="confirmDeleteContent($index)" data-name="{{ content.title }}">Archive</a>
+                    </div>
                     <!-- <a  class="danger js-delete-confirm" ng-click="confirmDeleteContent(content.id)" data-name="{{ content.title }}" data-toggle="modal" data-target="#modalDelete">Delete</a> -->
                     <!--ng-click="deleteContent(content.id)"-->
                 </td>
@@ -78,17 +84,20 @@
 
 <ng-modal show='confirmation.shown'>
     <div class="modal-header">
-        <h4 class="modal-title">Confirm delete</h4>
+        <h4 class="modal-title">Confirm {{ archive ?  "Delete" : "Archive" }} </h4>
     </div>
     <div class="modal-body">
-        Do you really want to delete {{ confirmation.name }}?
+        Do you really want to {{ archive ? "delete" : "archive" }} {{ confirmation.name }}?
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-link" ng-click="confirmation.shown = false">
             Cancel
         </button>
-        <button class="btn btn-danger modal-confirm-button" ng-click="deleteContent(confirmation.idx)" title="Confirms removal">
+        <button class="btn btn-danger modal-confirm-button" ng-if="archive" ng-click="deletePermaContent(confirmation.idx)" title="Confirms removal">
+            Archive
+        </button>
+        <button class="btn btn-danger modal-confirm-button" ng-if="!archive" ng-click="deleteContent(confirmation.idx)" title="Confirms removal">
             Delete
-        </a>
+        </button>
     </div>
 </ng-modal>

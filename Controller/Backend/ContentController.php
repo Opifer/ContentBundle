@@ -159,6 +159,24 @@ class ContentController extends Controller
             return $event->getResponse();
         }
 
-        return $this->render('OpiferContentBundle:Content:index.html.twig');
+        return $this->render('OpiferContentBundle:Content:index.html.twig', ['archive' => false]);
+    }
+
+    /**
+     * Archive action
+     *
+     * @param  Request $request
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function archiveAction(Request $request)
+    {
+        $event = new ResponseEvent($request);
+        $this->get('event_dispatcher')->dispatch(Events::CONTENT_CONTROLLER_ARCHIVE, $event);
+        if (null !== $event->getResponse()) {
+            return $event->getResponse();
+        }
+
+        return $this->render('OpiferContentBundle:Content:index.html.twig', [ 'archive' => true]);
     }
 }

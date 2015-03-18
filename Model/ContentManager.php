@@ -6,7 +6,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\HttpFoundation\Request;
-
 use Opifer\CrudBundle\Pagination\Paginator;
 use Opifer\EavBundle\Form\Type\NestedContentType;
 use Opifer\EavBundle\Manager\EavManager;
@@ -29,7 +28,7 @@ class ContentManager implements ContentManagerInterface
     protected $templateClass;
 
     /**
-     * Constructor
+     * Constructor.
      *
      * @param EntityManagerInterface $em
      * @param FormFactoryInterface   $formFactory
@@ -38,7 +37,7 @@ class ContentManager implements ContentManagerInterface
     public function __construct(EntityManagerInterface $em, FormFactoryInterface $formFactory, EavManager $eavManager, $class, $templateClass)
     {
         if (!is_subclass_of($class, 'Opifer\ContentBundle\Model\ContentInterface')) {
-            throw new \Exception($class .' must implement Opifer\ContentBundle\Model\ContentInterface');
+            throw new \Exception($class.' must implement Opifer\ContentBundle\Model\ContentInterface');
         }
 
         $this->em = $em;
@@ -49,7 +48,7 @@ class ContentManager implements ContentManagerInterface
     }
 
     /**
-     * Get the class
+     * Get the class.
      *
      * @return string
      */
@@ -59,7 +58,7 @@ class ContentManager implements ContentManagerInterface
     }
 
     /**
-     * Get repository
+     * Get repository.
      *
      * @return Doctrine\ORM\EntityRepository
      */
@@ -71,9 +70,9 @@ class ContentManager implements ContentManagerInterface
     /**
      * {@inheritDoc}
      */
-    public function getPaginatedByRequest(Request $request)
+    public function getPaginatedByRequest(Request $request, $archive = false)
     {
-        $qb = $this->getRepository()->getQueryBuilderFromRequest($request);
+        $qb = $this->getRepository()->getQueryBuilderFromRequest($request, $archive);
 
         $page = ($request->get('p')) ? $request->get('p') : 1;
         $limit = ($request->get('limit')) ? $request->get('limit') : 25;
@@ -124,7 +123,7 @@ class ContentManager implements ContentManagerInterface
     }
 
     /**
-     * Save nested content forms from request and return the added/updated ids
+     * Save nested content forms from request and return the added/updated ids.
      *
      * @param Request $request
      *
@@ -180,7 +179,7 @@ class ContentManager implements ContentManagerInterface
                 $collection->add($nestedContent);
             } else {
                 // @todo show the user a decent error message
-                throw new \Exception('Something went wrong while saving nested content. Message: '. $nestedContentForm->getErrors());
+                throw new \Exception('Something went wrong while saving nested content. Message: '.$nestedContentForm->getErrors());
             }
         }
 
@@ -188,6 +187,40 @@ class ContentManager implements ContentManagerInterface
         $this->remove(array_diff($oldIds, $ids));
 
         return $collection;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function retrieveContent($id, $archive = false)
+    {
+        $repository = $this->getRepository();
+        if ($archive) {
+            $repository->setRetrieveArchived(true);
+        }
+
+        return $repository->find($id);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function restoreContent($content)
+    {
+        $content->setDeletedAt(null);
+        $this->em->persist($content);
+        $this->em->flush();
+        $this->getRepository()->setRetrieveArchived(false);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function deleteContent($content)
+    {
+        $this->em->remove($content);
+        $this->em->flush();
+        $this->getRepository()->setRetrieveArchived(false);
     }
 
     /**
