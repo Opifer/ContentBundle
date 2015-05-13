@@ -67,7 +67,7 @@ class SlugHandler extends RelativeSlugHandler
         
         $this->repository = $this->ea->getObjectManager()->getRepository(get_class($this->object));
         
-        $this->_checkSlugIndex();
+        $this->checkSlugIndex();
     }
     
     /**
@@ -75,7 +75,7 @@ class SlugHandler extends RelativeSlugHandler
      * 
      * @param int $i
      */
-    private function _checkSlugIndex($i = 0)
+    private function checkSlugIndex($i = 0)
     {
         $query = $this->repository->createQueryBuilder('c');
         $query->where("c.slug = :slug");
@@ -92,7 +92,7 @@ class SlugHandler extends RelativeSlugHandler
         
         if($results) {
             $i++;
-            return $this->_checkSlugIndex($i);
+            return $this->checkSlugIndex($i);
         }
         
         if($i) {
