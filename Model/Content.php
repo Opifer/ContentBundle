@@ -121,7 +121,7 @@ class Content implements ContentInterface, EntityInterface, Nestable
      *          @Gedmo\SlugHandlerOption(name="relationField", value="directory"),
      *          @Gedmo\SlugHandlerOption(name="relationSlugField", value="slug"),
      *          @Gedmo\SlugHandlerOption(name="separator", value="/"),
-     *          @Gedmo\SlugHandlerOption(name="onSlugCompletion", value={"appendIndex"})
+     *          @Gedmo\SlugHandlerOption(name="onSlugCompletion", value={"appendIndex", "checkIndexPage"})
      *      })
      * }, fields={"title"}, unique_base="deletedAt")
      * @ORM\Column(name="slug", type="string", length=255)
