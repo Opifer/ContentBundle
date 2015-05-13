@@ -101,7 +101,19 @@ class ContentManager implements ContentManagerInterface
     {
         return $this->getRepository()->findActiveBySlug($slug);
     }
-    
+
+    /**
+     * Find content by alias
+     *
+     * @param string $alias
+     *
+     * @return ContentInterface
+     */
+    public function findOneByAlias($alias)
+    {
+        return $this->getRepository()->findOneByAlias($alias);
+    }
+
     /**
      * Find published content by alias
      *
@@ -267,6 +279,7 @@ class ContentManager implements ContentManagerInterface
 
         //duplicate content
         $duplicatedContent = clone $content;
+        $duplicatedContent->setSlug(null);
         $duplicatedContent->setValueSet($duplicatedValueset);
 
         if (!is_null($nestedIn)) {
