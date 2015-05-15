@@ -25,6 +25,8 @@ class SlugHandler extends RelativeSlugHandler
         
         $this->slug = &$slug;
         $this->usedOptions = $config['handlers'][get_called_class()];
+        $this->object = $object;
+        $this->ea = $ea;
         
         if(isset($this->usedOptions[__FUNCTION__])) {
             foreach($this->usedOptions[__FUNCTION__] as $method) {
@@ -33,6 +35,7 @@ class SlugHandler extends RelativeSlugHandler
                 }
             }
         }
+        
     }
     
     /**
@@ -50,6 +53,50 @@ class SlugHandler extends RelativeSlugHandler
     {
         if(substr($this->slug, -1) == '/') {
             $this->slug = $this->slug . 'index';
+        }
+    }
+    
+    /**
+     * Update slug if index page exists
+     */
+    private function checkIndexPage()
+    {
+        if(!$this->slug) {
+            return;
+        }
+        
+        $this->repository = $this->ea->getObjectManager()->getRepository(get_class($this->object));
+        
+        $this->checkSlugIndex();
+    }
+    
+    /**
+     * Loop through all pages with same slug and increment by one
+     * 
+     * @param int $i
+     */
+    private function checkSlugIndex($i = 0)
+    {
+        $query = $this->repository->createQueryBuilder('c');
+        $query->where("c.slug = :slug");
+        
+        if($this->object->getId()) {
+            $query->andWhere("c.id != :id");
+            $query->setParameter('id', $this->object->getId());
+        }
+        
+        $slugBase = ($i > 0) ? $this->slug.'-'.$i : $this->slug;
+        
+        $query->setParameter('slug', $slugBase.'/index');
+        $results = $query->getQuery()->getResult();
+        
+        if($results) {
+            $i++;
+            return $this->checkSlugIndex($i);
+        }
+        
+        if($i) {
+            $this->slug = $slugBase;
         }
     }
 }
