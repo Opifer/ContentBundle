@@ -40,7 +40,7 @@ class Content implements ContentInterface, EntityInterface, Nestable
     /**
      * @var ValueSetInterface
      *
-     * @ORM\ManyToOne(targetEntity="Opifer\EavBundle\Model\ValueSetInterface", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Opifer\EavBundle\Model\ValueSetInterface", cascade= {"persist", "detach", "remove"})
      * @ORM\JoinColumn(name="valueset_id", referencedColumnName="id")
      */
     protected $valueSet;
